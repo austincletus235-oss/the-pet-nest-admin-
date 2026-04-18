@@ -1,32 +1,65 @@
 // --- 1. INITIALIZE SUPABASE ---
 const supabaseUrl = 'https://mbpdimmuuzrxgsraofew.supabase.co';
 const supabaseKey = 'sb_publishable_KIu8B6ZxNI0y03L2MXszQQ_bfHS-n-k';
+
+// MOBILE DEBUG: Alert if the Supabase library didn't load from the HTML file
+if (!window.supabase) {
+    alert("CRITICAL ERROR: Supabase library is missing. Check your index.html file!");
+}
+
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // --- 2. AUTHENTICATION LOGIC ---
 async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-        document.getElementById('login-error').innerText = error.message;
-    } else {
-        document.getElementById('login-section').classList.remove('active');
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('dashboard-section').classList.remove('hidden');
-        loadDashboardStats();
-        loadPets();
+    const emailInput = document.getElementById('email').value;
+    const passwordInput = document.getElementById('password').value;
+    const errorText = document.getElementById('login-error');
+
+    // Visual feedback so you know the button works on your phone
+    errorText.innerText = "Attempting to log in...";
+    errorText.style.color = "blue";
+
+    if (!emailInput || !passwordInput) {
+        errorText.innerText = "Please enter both your email and password.";
+        errorText.style.color = "red";
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ 
+            email: emailInput, 
+            password: passwordInput 
+        });
+        
+        if (error) {
+            // Shows exact Supabase error on screen
+            errorText.innerText = "Login Failed: " + error.message;
+            errorText.style.color = "red";
+        } else {
+            errorText.innerText = "Success! Loading dashboard...";
+            errorText.style.color = "green";
+            
+            document.getElementById('login-section').classList.remove('active');
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            
+            loadDashboardStats();
+            loadPets();
+        }
+    } catch (err) {
+        // Triggers a phone pop-up if the code completely crashes
+        alert("Code crashed during login: " + err.message);
+        errorText.innerText = "Crash: " + err.message;
+        errorText.style.color = "red";
     }
 }
 
 async function logout() {
     await supabase.auth.signOut();
-    window.location.reload(); // Refresh to show login screen
+    window.location.reload(); 
 }
 
-// Check if already logged in on page load
+// Check if already logged in when you refresh the page
 supabase.auth.getSession().then(({ data: { session } }) => {
     if (session) {
         document.getElementById('login-section').classList.add('hidden');
@@ -35,6 +68,8 @@ supabase.auth.getSession().then(({ data: { session } }) => {
         loadDashboardStats();
         loadPets();
     }
+}).catch(err => {
+    console.error("Session check failed", err);
 });
 
 // --- 3. UI ROUTING ---
@@ -53,7 +88,10 @@ function showTab(tabId) {
 // --- 4. DASHBOARD STATS ---
 async function loadDashboardStats() {
     const { data, error } = await supabase.from('pets').select('status');
-    if (error) return console.error("Error fetching stats:", error);
+    if (error) {
+        alert("Error loading stats: " + error.message);
+        return;
+    }
 
     const total = data.length;
     const sold = data.filter(pet => pet.status === 'Sold').length;
@@ -64,54 +102,70 @@ async function loadDashboardStats() {
 
 // --- 5. ADD PET & UPLOAD MEDIA ---
 async function addPet(event) {
-    event.preventDefault(); // Stop form from refreshing the page
+    event.preventDefault(); 
     const btn = document.getElementById('submit-btn');
     const statusText = document.getElementById('upload-status');
     btn.innerText = "Uploading...";
     btn.disabled = true;
 
-    // 1. Get Form Data
-    const name = document.getElementById('pet-name').value;
-    const price = document.getElementById('pet-price').value;
-    const category = document.getElementById('pet-category').value;
-    const status = document.getElementById('pet-status').value;
-    const desc = document.getElementById('pet-desc').value;
-    const file = document.getElementById('pet-media').files[0];
+    try {
+        const name = document.getElementById('pet-name').value;
+        const price = document.getElementById('pet-price').value;
+        const category = document.getElementById('pet-category').value;
+        const status = document.getElementById('pet-status').value;
+        const desc = document.getElementById('pet-desc').value;
+        const fileInput = document.getElementById('pet-media');
 
-    // 2. Upload File to Supabase Storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${fileName}`;
+        if (fileInput.files.length === 0) {
+            statusText.innerText = "Please select an image/video first.";
+            statusText.style.color = "red";
+            btn.innerText = "Upload Pet";
+            btn.disabled = false;
+            return;
+        }
 
-    const { error: uploadError } = await supabase.storage.from('pet-media').upload(filePath, file);
-    
-    if (uploadError) {
-        statusText.innerText = "Error uploading file: " + uploadError.message;
-        btn.innerText = "Upload Pet";
-        btn.disabled = false;
-        return;
-    }
+        const file = fileInput.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-    // 3. Get Public URL for the uploaded file
-    const { data: publicUrlData } = supabase.storage.from('pet-media').getPublicUrl(filePath);
-    const mediaUrl = publicUrlData.publicUrl;
+        // Upload file
+        const { error: uploadError } = await supabase.storage.from('pet-media').upload(fileName, file);
+        
+        if (uploadError) {
+            statusText.innerText = "Storage Error: " + uploadError.message;
+            statusText.style.color = "red";
+            btn.innerText = "Upload Pet";
+            btn.disabled = false;
+            return;
+        }
 
-    // 4. Save data to Supabase Database
-    const { error: dbError } = await supabase.from('pets').insert([{
-        name: name,
-        price: price,
-        category: category,
-        status: status,
-        description: desc,
-        media_url: mediaUrl
-    }]);
+        // Get URL
+        const { data: publicUrlData } = supabase.storage.from('pet-media').getPublicUrl(fileName);
+        const mediaUrl = publicUrlData.publicUrl;
 
-    if (dbError) {
-        statusText.innerText = "Error saving pet: " + dbError.message;
-    } else {
-        statusText.innerText = "Pet added successfully!";
-        statusText.style.color = "green";
-        document.getElementById('add-pet-form').reset();
+        // Save to Database
+        const { error: dbError } = await supabase.from('pets').insert([{
+            name: name,
+            price: price,
+            category: category,
+            status: status,
+            description: desc,
+            media_url: mediaUrl
+        }]);
+
+        if (dbError) {
+            statusText.innerText = "Database Error: " + dbError.message;
+            statusText.style.color = "red";
+        } else {
+            statusText.innerText = "Pet added successfully! 🎉";
+            statusText.style.color = "green";
+            document.getElementById('add-pet-form').reset();
+        }
+
+    } catch (err) {
+        alert("Upload crashed: " + err.message);
+        statusText.innerText = "Crash: " + err.message;
+        statusText.style.color = "red";
     }
 
     btn.innerText = "Upload Pet";
@@ -121,16 +175,19 @@ async function addPet(event) {
 // --- 6. LIST & MANAGE PETS ---
 async function loadPets() {
     const { data, error } = await supabase.from('pets').select('*').order('created_at', { ascending: false });
-    if (error) return console.error(error);
+    if (error) {
+        alert("Error loading pets: " + error.message);
+        return;
+    }
 
     const tbody = document.getElementById('pets-table-body');
-    tbody.innerHTML = ''; // Clear table
+    tbody.innerHTML = ''; 
 
     data.forEach(pet => {
         const isSold = pet.status === 'Sold';
         tbody.innerHTML += `
             <tr>
-                <td><img src="${pet.media_url}" class="thumbnail"></td>
+                <td><img src="${pet.media_url}" class="thumbnail" style="width:60px; height:60px; object-fit:cover; border-radius:4px;"></td>
                 <td>${pet.name}</td>
                 <td>$${pet.price}</td>
                 <td>${pet.category}</td>
@@ -146,8 +203,9 @@ async function loadPets() {
 
 // --- 7. UPDATE STATUS ---
 async function markSold(id) {
-    await supabase.from('pets').update({ status: 'Sold' }).eq('id', id);
-    loadPets(); // Reload table
+    const { error } = await supabase.from('pets').update({ status: 'Sold' }).eq('id', id);
+    if (error) alert("Error marking as sold: " + error.message);
+    loadPets(); 
     loadDashboardStats();
 }
 
@@ -155,14 +213,18 @@ async function markSold(id) {
 async function deletePet(id, mediaUrl) {
     if(!confirm("Are you sure you want to delete this pet?")) return;
 
-    // 1. Delete from Database
-    await supabase.from('pets').delete().eq('id', id);
+    // Delete DB record
+    const { error: dbError } = await supabase.from('pets').delete().eq('id', id);
+    if (dbError) {
+        alert("Database delete error: " + dbError.message);
+        return;
+    }
 
-    // 2. Extract filename from URL and delete from Storage
-    // The URL looks like: .../storage/v1/object/public/pet-media/filename.jpg
+    // Delete Storage file
     const fileName = mediaUrl.split('/').pop(); 
-    await supabase.storage.from('pet-media').remove([fileName]);
+    const { error: storageError } = await supabase.storage.from('pet-media').remove([fileName]);
+    if (storageError) alert("Storage delete error: " + storageError.message);
 
-    loadPets(); // Reload table
+    loadPets(); 
     loadDashboardStats();
 }
