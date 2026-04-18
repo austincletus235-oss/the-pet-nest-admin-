@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Nest - Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div id="login-section" class="active">
+        <div class="login-box">
+            <h2>Admin Login</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <p id="login-error" style="color: red;"></p>
+        </div>
+    </div>
+
+    <div id="dashboard-section" class="hidden">
+        <div class="sidebar">
+            <h2>🐾 Pet Nest Admin</h2>
+            <button onclick="showTab('dashboard-tab')">📊 Dashboard</button>
+            <button onclick="showTab('manage-tab')">📋 Manage Pets</button>
+            <button onclick="showTab('add-tab')">➕ Add Pet</button>
+            <button onclick="logout()" style="margin-top: auto; background-color: #ff4757;">Logout</button>
+        </div>
+
+        <div class="main-panel">
+            <div id="dashboard-tab" class="tab-content active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Pets Listed</h3>
+                        <p id="stat-total">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pets Sold</h3>
+                        <p id="stat-sold">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="manage-tab" class="tab-content hidden">
+                <h2>Manage Pets</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pets-table-body">
+                        </tbody>
+                </table>
+            </div>
+
+            <div id="add-tab" class="tab-content hidden">
+                <h2>Add New Pet</h2>
+                <form id="add-pet-form" onsubmit="addPet(event)">
+                    <label>Name:</label>
+                    <input type="text" id="pet-name" required>
+
+                    <label>Price ($):</label>
+                    <input type="number" id="pet-price" required>
+
+                    <label>Category:</label>
+                    <select id="pet-category">
+                        <option value="Sale">Sale</option>
+                        <option value="Adoption">Adoption</option>
+                        <option value="Accessories">Accessories</option>
+                    </select>
+
+                    <label>Status:</label>
+                    <select id="pet-status">
+                        <option value="Available">Available</option>
+                        <option value="Sold">Sold</option>
+                    </select>
+
+                    <label>Description:</label>
+                    <textarea id="pet-desc" rows="4"></textarea>
+
+                    <label>Upload Media (Image/Video):</label>
+                    <input type="file" id="pet-media" accept="image/*,video/*" required>
+
+                    <button type="submit" id="submit-btn">Upload Pet</button>
+                    <p id="upload-status"></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
