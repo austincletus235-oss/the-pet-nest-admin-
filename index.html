@@ -1,102 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Pet Nest - Admin</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pet Admin (Temporary)</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="wrap">
+    <div class="top">
+      <h2>Pet Admin (Temporary)</h2>
+      <button id="logoutBtn" class="btn hidden">Logout</button>
+    </div>
 
-    <div id="login-section" class="active">
-        <div class="login-box">
-            <h2>Admin Login</h2>
-            <input type="email" id="email" placeholder="Email Address">
-            <input type="password" id="password" placeholder="Password">
-            
-            <p id="login-error" style="font-weight: bold; margin-bottom: 10px;"></p>
-            
-            <!-- FIXED: Using window.login() so it always finds the function -->
-            <button onclick="window.login()">Login</button>
+    <div id="loginCard" class="card">
+      <h3>Admin Login</h3>
+      <input id="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button id="loginBtn">Login</button>
+      <p id="loginMsg" class="small"></p>
+    </div>
+
+    <div id="app" class="hidden">
+      <div class="card">
+        <h3>Add Pet</h3>
+        <div class="row">
+          <input id="name" placeholder="Name" />
+          <input id="price" type="number" placeholder="Price" />
         </div>
+        <div class="row">
+          <select id="category">
+            <option>Sale</option>
+            <option>Adoption</option>
+            <option>Accessories</option>
+          </select>
+          <select id="status">
+            <option value="available">Available</option>
+            <option value="sold">Sold</option>
+          </select>
+        </div>
+        <textarea id="description" placeholder="Description"></textarea>
+        <input id="media" type="file" accept="image/*,video/*" />
+        <button id="addPetBtn">Add Pet</button>
+        <p id="addMsg" class="small"></p>
+      </div>
+
+      <div class="card">
+        <h3>Pets List</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Media</th><th>Name</th><th>Price</th><th>Category</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="petsBody"></tbody>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <div id="dashboard-section" class="hidden">
-        <nav class="sidebar">
-            <h2>The Pet Nest</h2>
-            <button onclick="showTab('dashboard-tab')">Dashboard Stats</button>
-            <button onclick="showTab('add-tab')">Add New Pet</button>
-            <button onclick="showTab('manage-tab')">Manage Pets</button>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </nav>
-
-        <main class="content">
-            
-            <div id="dashboard-tab" class="tab-content active">
-                <h2>Overview</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Pets Listed</h3>
-                        <p id="stat-total">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Pets Sold</h3>
-                        <p id="stat-sold">0</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="add-tab" class="tab-content hidden">
-                <h2>Add a New Pet</h2>
-                <form id="add-pet-form" onsubmit="addPet(event)">
-                    <input type="text" id="pet-name" placeholder="Pet Name (e.g., Golden Retriever puppy)" required>
-                    <input type="number" id="pet-price" placeholder="Price (USD)" required>
-                    
-                    <select id="pet-category">
-                        <option value="Dogs">Dogs</option>
-                        <option value="Cats">Cats</option>
-                        <option value="Birds">Birds</option>
-                        <option value="Accessories">Accessories</option>
-                    </select>
-
-                    <select id="pet-status">
-                        <option value="Available">Available</option>
-                        <option value="Sold">Sold</option>
-                    </select>
-                    
-                    <textarea id="pet-desc" placeholder="Pet Description..." rows="4"></textarea>
-                    
-                    <label>Upload Image/Video:</label>
-                    <input type="file" id="pet-media" accept="image/*,video/*" required>
-                    
-                    <p id="upload-status" style="font-weight: bold; margin-bottom: 10px;"></p>
-                    
-                    <button type="submit" id="submit-btn">Upload Pet</button>
-                </form>
-            </div>
-
-            <div id="manage-tab" class="tab-content hidden">
-                <h2>Manage Inventory</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Media</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pets-table-body"></tbody>
-                </table>
-            </div>
-
-        </main>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
 </body>
 </html>
