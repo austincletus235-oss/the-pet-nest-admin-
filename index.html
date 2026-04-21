@@ -1,65 +1,216 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pet Admin (Temporary)</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>The Pet Nest Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg:#f5f8fa;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --primary:#1e3c5a;
+      --accent:#e76f51;
+      --ok:#16a34a;
+      --danger:#dc2626;
+      --border:#e5e7eb;
+    }
+    *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+    body{margin:0;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:0 4px 14px rgba(0,0,0,.04);
+      margin-bottom:16px;
+    }
+    h1,h2{margin:0 0 14px}
+    .muted{color:var(--muted);font-size:.92rem}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    @media (max-width:800px){
+      .row,.row-3{grid-template-columns:1fr}
+    }
+    label{display:block;font-size:.9rem;font-weight:700;margin:6px 0}
+    input,select,textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      outline:none;
+      background:#fff;
+    }
+    textarea{min-height:90px;resize:vertical}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{
+      border:none;border-radius:10px;padding:10px 14px;
+      cursor:pointer;font-weight:700
+    }
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-accent{background:var(--accent);color:#fff}
+    .btn-ghost{background:#eef2f7;color:var(--primary)}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn:hover{opacity:.95}
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap
+    }
+    .hidden{display:none !important}
+    .msg{margin-top:8px;font-size:.92rem}
+    .msg.ok{color:var(--ok)}
+    .msg.err{color:var(--danger)}
+    .table-wrap{overflow:auto}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:820px;
+      background:#fff
+    }
+    th,td{
+      border-bottom:1px solid var(--border);
+      padding:10px;
+      text-align:left;
+      font-size:.92rem;
+      vertical-align:top;
+    }
+    th{background:#f9fafb;position:sticky;top:0}
+    .pill{
+      display:inline-block;padding:4px 8px;border-radius:999px;
+      font-size:.75rem;font-weight:700
+    }
+    .pill.sale{background:#e0f2fe;color:#075985}
+    .pill.adoption{background:#dcfce7;color:#166534}
+    .pill.sold{background:#fee2e2;color:#991b1b}
+    .pill.available{background:#ecfccb;color:#3f6212}
+    .small-link{font-size:.85rem}
+    .footer-note{margin-top:10px;color:var(--muted);font-size:.85rem}
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="top">
-      <h2>Pet Admin (Temporary)</h2>
-      <button id="logoutBtn" class="btn hidden">Logout</button>
+    <div class="topbar card">
+      <div>
+        <h1>The Pet Nest Admin</h1>
+        <div class="muted">Manage pets, media upload, sale/adoption sections, and status.</div>
+      </div>
+      <button id="logoutBtn" class="btn btn-danger hidden">Logout</button>
     </div>
 
+    <!-- LOGIN -->
     <div id="loginCard" class="card">
-      <h3>Admin Login</h3>
-      <input id="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <button id="loginBtn">Login</button>
-      <p id="loginMsg" class="small"></p>
+      <h2>Admin Login</h2>
+      <div class="row">
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="admin@email.com" />
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="loginBtn" class="btn btn-primary">Login</button>
+      </div>
+      <div id="loginMsg" class="msg"></div>
     </div>
 
+    <!-- APP -->
     <div id="app" class="hidden">
+      <!-- ADD PET -->
       <div class="card">
-        <h3>Add Pet</h3>
+        <h2>Add Pet</h2>
+
         <div class="row">
-          <input id="name" placeholder="Name" />
-          <input id="price" type="number" placeholder="Price" />
+          <div>
+            <label for="name">Pet Name *</label>
+            <input id="name" type="text" placeholder="e.g. Bella" />
+          </div>
+          <div>
+            <label for="price">Price</label>
+            <input id="price" type="number" min="0" step="0.01" placeholder="e.g. 1200" />
+          </div>
         </div>
+
+        <div class="row-3">
+          <div>
+            <label for="category">Category</label>
+            <select id="category">
+              <option value="dog">dog</option>
+              <option value="cat">cat</option>
+              <option value="bird">bird</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="section">Section</label>
+            <select id="section">
+              <option value="sale">sale</option>
+              <option value="adoption">adoption</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="available">available</option>
+              <option value="reserved">reserved</option>
+              <option value="sold">sold</option>
+              <option value="hidden">hidden</option>
+            </select>
+          </div>
+        </div>
+
         <div class="row">
-          <select id="category">
-            <option>Sale</option>
-            <option>Adoption</option>
-            <option>Accessories</option>
-          </select>
-          <select id="status">
-            <option value="available">Available</option>
-            <option value="sold">Sold</option>
-          </select>
+          <div>
+            <label for="media">Image/Video</label>
+            <input id="media" type="file" accept="image/*,video/*" />
+          </div>
+          <div>
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Short description"></textarea>
+          </div>
         </div>
-        <textarea id="description" placeholder="Description"></textarea>
-        <input id="media" type="file" accept="image/*,video/*" />
-        <button id="addPetBtn">Add Pet</button>
-        <p id="addMsg" class="small"></p>
+
+        <div class="actions">
+          <button id="addPetBtn" class="btn btn-accent">Add Pet</button>
+        </div>
+        <div id="addMsg" class="msg"></div>
       </div>
 
+      <!-- PETS TABLE -->
       <div class="card">
-        <h3>Pets List</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Media</th><th>Name</th><th>Price</th><th>Category</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="petsBody"></tbody>
-        </table>
+        <h2>All Pets</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Media</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th>Section</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="petsBody">
+              <tr><td colspan="7">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="footer-note">
+          Tip: “Mark Sold” updates status only. “Delete” removes DB row and storage media (if media_path exists).
+        </div>
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Your full script.js -->
   <script src="script.js"></script>
 </body>
 </html>
